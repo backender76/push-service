@@ -1,0 +1,12 @@
+.idea
+.DS_Store
+/node_modules/
+/dist/
+/release/
+*.zip
+TODO.md
+inventory.ini
+.env
+nginx-host.conf
+service.service
+.vault-pass

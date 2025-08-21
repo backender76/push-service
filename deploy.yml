@@ -1,0 +1,87 @@
+# ansible-playbook -i inventory.ini deploy.yml
+---
+- name: "DEPLOY"
+  hosts: production
+  vars:
+    # Переменные шаблона конфига сервиса
+    service_name: "push-service"
+    node_path: "/usr/local/bin/node"
+    # linux_user: "user"
+    # Переменные шаблона конфига Nginx-хоста
+    # api_host_name: "api.site.ru"
+
+  tasks:
+    - name: "Nginx-host config"
+      ansible.builtin.template:
+        src: "./nginx.j2"
+        dest: "nginx-host.conf"
+      changed_when: false
+      delegate_to: localhost
+
+    - name: "Install nginx-host config"
+      ansible.builtin.copy:
+        src: "./nginx-host.conf"
+        dest: "/etc/nginx/sites-available/{{ api_host_name }}"
+      become: true
+      register: service_conf
+
+    - name: Reload nginx
+      ansible.builtin.command: nginx -s reload
+      when: service_conf.changed
+      become: true
+      register: nginx_result
+
+    - name: "Upload release.zip"
+      ansible.builtin.copy:
+        src: "./release.zip"
+        dest: "/opt/{{ service_name }}.zip"
+      become: true
+      register: upload
+
+    - name: "Make installation directory"
+      ansible.builtin.file:
+        path: "/opt/{{ service_name }}"
+        state: directory
+      become: true
+
+    - name: "Unzip"
+      ansible.builtin.unarchive:
+        src: "/opt/{{ service_name }}.zip"
+        dest: "/opt/{{ service_name }}"
+        remote_src: yes
+      become: true
+      when: upload.changed
+
+    - name: "Make service config"
+      ansible.builtin.template:
+        src: "./services.j2"
+        dest: "service.service"
+      vars:
+        services_path: "/opt/{{ service_name }}"
+        git_hash: "git_hash"
+        SERVICE_ENVIRONMENTS:
+      delegate_to: localhost
+
+    - name: "Upload service config"
+      ansible.builtin.copy:
+        src: "./service.service"
+        dest: "/etc/systemd/system/{{ service_name }}.service"
+      become: true
+      register: upload
+
+    - name: "Restart systemd"
+      ansible.builtin.systemd_service:
+        daemon_reexec: true
+      become: true
+
+    - name: "Start sertvice"
+      ansible.builtin.systemd_service:
+        name: "{{ service_name }}.service"
+        state: started
+        enabled: true
+      become: true
+
+    - ansible.builtin.debug: msg="sudo systemctl status {{ service_name }}.service"
+    - ansible.builtin.debug: msg="sudo journalctl -u {{ service_name }}.service"
+    - ansible.builtin.debug: msg="sudo journalctl -u {{ service_name }}.service -f"
+    - ansible.builtin.debug: msg="sudo journalctl -xefu {{ service_name }}.service"
