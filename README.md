@@ -10,18 +10,33 @@ https://www.rustore.ru/help/sdk/push-notifications/send-push-notifications
 
 https://yandex.cloud/ru/docs/notifications/concepts/push
 
-## Сборка и Деплой
+## Зависимости
 
-`ansible-playbook -i inventory.ini build.yml --ask-become-pass`
+1) Docker
+2) Ansible
 
-`ansible-playbook -i inventory.ini deploy.yml`
+## After git clone
 
-Пример inventory.ini:
+1) Создать файл `.env` по образу и подобию `default.env`. Он испрользуется в шаблоне `services.j2` для генерации конфига linux-сервиса.
+
+2) Создать файл `.vault-pass` содержащий пароль для кошелька Ansible.
+
+3) Создать инвентари (inventory.ini) для Ansible. Пример:
 
 ```ini
 [production]
-my-hots ansible_connection=ssh ansible_host=100.200.400.400 ansible_user=username
+production-1 ansible_connection=ssh ansible_host=100.200.400.400 ansible_user=username
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3.9
 ```
+
+4) Выполнить `npm ci`.
+
+## Сборка и Деплой
+
+`export ANSIBLE_VAULT_PASSWORD_FILE="./.vault-pass"`
+
+`ansible-playbook -i inventory.ini build.yml --ask-become-pass`
+
+`ansible-playbook -i inventory.ini deploy.yml`
