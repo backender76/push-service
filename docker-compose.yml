@@ -31,6 +31,7 @@ services:
       - ./src:/app/backend/src
       - ./node_modules:/app/backend/node_modules
       - ./tsconfig.json:/app/backend/tsconfig.json
+      - ./globals.d.ts:/app/backend/globals.d.ts
       - ./dev.js:/app/dev.js
     env_file:
       - path: ./default.env

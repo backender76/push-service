@@ -17,9 +17,12 @@ const child_process = require("child_process");
     { command: buildWatch, name: "0" },
     { command: startWatch, name: "1" },
   ];
-  console.log(await spawn(clear));
-  console.log(await spawn(build));
-
+  try {
+    console.log(await spawn(clear));
+    console.log(await spawn(build));
+  } catch (err) {
+    console.error(err);
+  }
   const concurrently = require("concurrently");
   const { result } = concurrently(commands, { killOthers: ["failure", "success"] });
   result.then(success, failure);
