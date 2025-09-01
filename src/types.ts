@@ -2,6 +2,7 @@ import type { Collection, Document } from "mongodb";
 import type { Request } from "express";
 
 export interface MongoHelpers {
+  ObjectId: any,
   collection(name: string): Collection<Document>;
   hasCollection(name: string): boolean;
   createCollection(name: string): Collection<Document>;

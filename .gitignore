@@ -10,3 +10,4 @@ inventory.ini
 nginx-host.conf
 service.service
 .vault-pass
+tests/tests/rustore.test.ts

@@ -23,6 +23,7 @@
         -v ./src:/app/backend/src \
         -v ./node_modules:/app/backend/node_modules \
         -v ./tsconfig.json:/app/backend/tsconfig.json \
+        -v ./globals.d.ts:/app/backend/globals.d.ts \
         -v ./release:/app/backend/dist \
         -w /app \
         {{ build_image }} \

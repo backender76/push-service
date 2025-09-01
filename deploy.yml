@@ -77,7 +77,7 @@
     - name: "Start sertvice"
       ansible.builtin.systemd_service:
         name: "{{ service_name }}.service"
-        state: started
+        state: restarted
         enabled: true
       become: true
 
