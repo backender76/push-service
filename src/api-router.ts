@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import express from "express";
 import jsonwebtoken from "jsonwebtoken";
 import type { ApiReq, MongoHelpers } from "./types";
@@ -25,6 +25,7 @@ router.post(
     }
     await createCollection(mongo, `${appName}-push-tokens`);
     const players = await getPlayersCollection(mongo, appName);
+    await getPlayersProfilesCollection(mongo, appName);
 
     if (!players) {
       return res.status(500).send({ code: "players" });
@@ -48,6 +49,14 @@ async function getPlayersCollection(mongo: MongoHelpers, app: string) {
   const players = mongo.collection(`${app}-players`);
   if (init) players.createIndex({ uid: 1, provider: 1 }, { unique: true });
   return players;
+}
+
+async function getPlayersProfilesCollection(mongo: MongoHelpers, app: string) {
+  const name: string = `${app}-players-profiles`;
+  const init: boolean = await createCollection(mongo, name);
+  const collection = mongo.collection(name);
+  if (init) collection.createIndex({ player: 1 }, { unique: true });
+  return collection;
 }
 
 async function createCollection(mongo: MongoHelpers, name: string): Promise<boolean> {
@@ -74,26 +83,59 @@ function makeToken(data: AuthTokenPayload, secres: string): string {
   return jsonwebtoken.sign(data, secres);
 }
 
-router.post(
-  "/push-token/:app",
+router.use(
+  "/:method/:app",
   validate("headers", { authorization: NOT_EMPTY_STRING }),
-  validate("body", { token: NOT_EMPTY_STRING, provider: NOT_EMPTY_STRING }),
-  async (req: Request, res: Response) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     const [, authToken] = req.headers.authorization!.split(/ +/);
     const jwt = jsonwebtoken.verify(authToken, process.env.JWT_SECRET || "") as AuthTokenPayload;
+    (req as ApiReq).jwt = jwt;
+
+    if (req.params.app === jwt.app) {
+      next();
+    } else {
+      next(new Error(`Wrong app name: "${jwt.app}" != "${req.params.app}"!`));
+    }
+  }
+);
+
+router.post(
+  "/push-token/:app",
+  validate("body", { token: NOT_EMPTY_STRING, provider: NOT_EMPTY_STRING }),
+  async (req: Request, res: Response) => {
+    const { token, provider } = req.body;
+    const { mongo, jwt } = req as ApiReq;
     const collectionName: string = `${jwt.app}-push-tokens`;
-    const { mongo } = req as ApiReq;
-    console.log(JSON.stringify({ jwt }));
 
     if (!mongo.hasCollection(collectionName)) {
       return res.status(500).send({ error: "App not initialized!" });
     }
-    const collection = (req as ApiReq).mongo.collection(collectionName);
-    const { token, provider } = req.body;
+    const pushTokens = mongo.collection(collectionName);
 
-    await collection.updateOne(
+    await pushTokens.updateOne(
       { player: new mongo.ObjectId(jwt.player), provider },
       { $set: { token, updated: Date.now() }, $setOnInsert: { created: Date.now() } },
+      { upsert: true }
+    );
+    res.send({});
+  }
+);
+
+router.post(
+  "/profile/:app",
+  validate("body", { name: NOT_EMPTY_STRING, avatar: NOT_EMPTY_STRING }),
+  async (req: Request, res: Response) => {
+    const { mongo, jwt } = req as ApiReq;
+    const { app: appName } = req.params;
+
+    const profiles = await getPlayersProfilesCollection(mongo, appName);
+
+    await profiles.updateOne(
+      { player: new mongo.ObjectId(jwt.player) },
+      {
+        $set: { name: req.body.name, avatar: req.body.avatar, updated: Date.now() },
+        $setOnInsert: { created: Date.now() },
+      },
       { upsert: true }
     );
     res.send({});

@@ -12,4 +12,5 @@ export interface MongoHelpers {
 
 export interface ApiReq extends Request {
   mongo: MongoHelpers;
+  jwt: AuthTokenPayload;
 }
