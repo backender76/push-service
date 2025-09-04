@@ -44,4 +44,6 @@ services:
 
 volumes:
   mongo:
+    external: true
   mongo-config:
+    external: true

@@ -33,6 +33,8 @@ ansible_python_interpreter=/usr/bin/python3.9
 
 4) Выполнить `npm ci`.
 
+5) Выполнить `docker volume create mongo` и `docker volume create mongo-config`.
+
 ## Сборка и Деплой
 
 `export ANSIBLE_VAULT_PASSWORD_FILE="./.vault-pass"`
@@ -40,3 +42,7 @@ ansible_python_interpreter=/usr/bin/python3.9
 `ansible-playbook -i inventory.ini build.yml --ask-become-pass`
 
 `ansible-playbook -i inventory.ini deploy.yml`
+
+
+`sudo journalctl -u push-service.service -f`
+`sudo systemctl status push-service.service`
