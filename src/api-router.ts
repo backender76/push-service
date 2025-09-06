@@ -1,28 +1,39 @@
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import jsonwebtoken from "jsonwebtoken";
-import type { ApiReq, MongoHelpers } from "./types";
-import { md5 } from "./utils/md5";
-import { rules, validate } from "./utils/validate";
 import type { Collection, Document } from "mongodb";
+import type { ApiReq, MongoHelpers } from "./types";
+import { calcSig } from "./utils/calcSig";
+import { rules, validate } from "./utils/validate";
 
 const router = express.Router();
 
 const { NOT_EMPTY_STRING } = rules;
 
+router.use("/:method/:app", async (req: Request, res: Response, next: NextFunction) => {
+  const { mongo } = req as ApiReq;
+
+  const app = await mongo.applications().findOne({ name: req.params.app });
+
+  if (!app) {
+    return res.status(403).send({ code: "APP" });
+  }
+  const payload = req.method === "POST" ? req.body : req.query;
+
+  if (!payload || !payload.sig || payload.sig !== calcSig(payload, app.secret)) {
+    return res.status(403).send({ code: "SIG" });
+  }
+  next();
+});
+
 router.post(
   "/auth/:app",
-  validate("body", { secret: NOT_EMPTY_STRING, user: NOT_EMPTY_STRING, provider: NOT_EMPTY_STRING }),
+  validate("body", { user: NOT_EMPTY_STRING, provider: NOT_EMPTY_STRING }),
   async (req: Request, res: Response) => {
-    const { secret, user: userId, provider } = req.body;
+    const { user: userId, provider } = req.body;
     const { app: appName } = req.params;
     const { mongo } = req as ApiReq;
 
-    const app = await mongo.applications().findOne({ name: appName });
-
-    if (!app || !app.secret || app.secret !== md5(secret)) {
-      return res.status(403).send({});
-    }
     await createCollection(mongo, `${appName}-push-tokens`);
     const players = await getPlayersCollection(mongo, appName);
     await getPlayersProfilesCollection(mongo, appName);

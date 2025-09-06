@@ -1,6 +1,8 @@
 // ./node_modules/.bin/_mocha 'tests/profiles.test.ts'
 
 import { assert } from "chai";
+import { calcSig } from "../../src/utils/calcSig";
+import { md5 } from "../../src/utils/md5";
 
 const url: string = "http://localhost:8585/api";
 
@@ -9,11 +11,17 @@ const token: string =
 
 describe("Профили", function () {
   it("Сохранение", async function () {
-    const res = await fetch(`${url}/profile/demo`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name: "name", avatar: "avatar" }),
-    });
+    const res = await fetch(`${url}/profile/demo`, body({ name: "name", avatar: "avatar" }));
     assert.equal(res.status, 200);
   });
 });
+
+function body(body: Record<string, string>): RequestInit {
+  body.sig = calcSig(body, md5("demo"));
+
+  return {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json", authorization: `Bearer ${token}` },
+  };
+}
