@@ -6,7 +6,7 @@
 
 https://www.rustore.ru/help/sdk/push-notifications/send-push-notifications
 
-Ссылка для подключения в Compass: `mongodb://demo:demo@localhost:27019/push`
+Ссылка для подключения в Compass: `mongodb://demo:demo@localhost:27019/api`
 
 https://yandex.cloud/ru/docs/notifications/concepts/push
 

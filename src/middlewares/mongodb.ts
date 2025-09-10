@@ -4,7 +4,7 @@ import { md5 } from "../utils/md5";
 
 const DB_HOST = process.env.MONGO_HOST || "localhost";
 const DB_PORT = process.env.MONGO_PORT || "27017";
-const DB_NAME = process.env.MONGO_DB_NAME || "push";
+const DB_NAME = process.env.MONGO_DB_NAME || "api";
 const DB_USER = process.env.MONGO_INITDB_ROOT_USERNAME || "";
 const DB_PASS = process.env.MONGO_INITDB_ROOT_PASSWORD || "";
 
@@ -51,6 +51,15 @@ export const mongo = () => {
 
     let list: string[] = await collectionsList();
 
+    async function createCollectionIfNotExists(name: string): Promise<boolean> {
+      if (!list.includes(name)) {
+        await db.createCollection(name);
+        list = await collectionsList();
+        return true;
+      }
+      return false;
+    }
+
     return {
       ObjectId: ObjectId,
       collection: collection,
@@ -60,7 +69,22 @@ export const mongo = () => {
         list = await collectionsList();
         return collection;
       },
+      createCollectionIfNotExists: createCollectionIfNotExists,
       applications: makeCollectionSelector("applications"),
+
+      players: async (app: string) => {
+        const init = await createCollectionIfNotExists(`${app}-players`);
+        const players = collection(`${app}-players`);
+        if (init) players.createIndex({ uid: 1, provider: 1 }, { unique: true });
+        return players;
+      },
+      playersProfiles: async (app: string) => {
+        const name: string = `${app}-players-profiles`;
+        const init: boolean = await createCollectionIfNotExists(name);
+        const profiles = collection(name);
+        if (init) profiles.createIndex({ player: 1 }, { unique: true });
+        return profiles;
+      },
     };
   });
 

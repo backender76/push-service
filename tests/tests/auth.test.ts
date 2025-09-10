@@ -8,10 +8,18 @@ const API_URL: string = "http://localhost:8585/api";
 
 describe("Авторизация", function () {
   it("Получение токена", async function () {
-    const res = await fetch(`${API_URL}/auth/demo`, body({ user: "demo", provider: "android" }));
-    const json = await res.json();
-    assert.equal(res.status, 200, "Код статуса");
-    assert.exists(json.token, "Токен");
+    const res1 = await fetch(`${API_URL}/auth/demo`, body({ user: "demo", provider: "android" }));
+    const json1 = await res1.json();
+    assert.equal(res1.status, 200, "Код статуса");
+    assert.exists(json1.token, "Токен");
+
+    const res2 = await fetch(`${API_URL}/auth/demo`, body({ user: "demo-2", provider: "android" }));
+    const json2 = await res2.json();
+    assert.notEqual(json1.token, json2.token);
+
+    const res3 = await fetch(`${API_URL}/auth/demo`, body({ user: "demo", provider: "android" }));
+    const json3 = await res3.json();
+    assert.equal(json1.token, json3.token);
   });
 });
 

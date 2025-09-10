@@ -4,19 +4,30 @@ import { assert } from "chai";
 import { calcSig } from "../../src/utils/calcSig";
 import { md5 } from "../../src/utils/md5";
 
-const url: string = "http://localhost:8585/api";
-
-const token: string =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHAiOiJkZW1vIiwicGxheWVyIjoiNjhiNWE4NTVhOWVhY2I3NjM5YjY5Zjc3IiwiY3JlYXRlZCI6MTc1NjczNzMwNDE4NiwiaWF0IjoxNzU2NzM3MzA0fQ.JxbsuYc3PBR91z8Z3eM2ErcnJF7A4bim-BGuCT44OoM";
+const API_URL: string = "http://localhost:8585/api";
 
 describe("Профили", function () {
   it("Сохранение", async function () {
-    const res = await fetch(`${url}/profile/demo`, body({ name: "name", avatar: "avatar" }));
-    assert.equal(res.status, 200);
+    const token1 = await getToken("demo-1");
+    const res1 = await fetch(`${API_URL}/profile/demo`, body({ name: "name-1", avatar: "avatar" }, token1));
+    assert.equal(res1.status, 200);
+    const json1 = await res1.json();
+
+    const token2 = await getToken("demo-2");
+    const res2 = await fetch(`${API_URL}/profile/demo`, body({ name: "name-2", avatar: "avatar" }, token2));
+    const json2 = await res2.json();
+
+    assert.notEqual(json1.id, json2.id);
   });
 });
 
-function body(body: Record<string, string>): RequestInit {
+async function getToken(user: string = "demo"): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/demo`, body({ user, provider: "android" }));
+  const json = await res.json();
+  return json.token;
+}
+
+function body(body: Record<string, string>, token?: string): RequestInit {
   body.sig = calcSig(body, md5("demo"));
 
   return {
