@@ -43,7 +43,7 @@ export ANSIBLE_VAULT_PASSWORD_FILE="./.vault-pass"
 
 ansible-playbook -i inventory.ini build.yml --ask-become-pass
 
-ansible-playbook -i inventory.ini deploy.
+ansible-playbook -i inventory.ini deploy.yml
 
 sudo journalctl -u push-service.service -f
 
