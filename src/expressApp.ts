@@ -2,6 +2,7 @@ import express from "express";
 import * as bodyParser from "body-parser";
 import { CORS } from "./middlewares/CORS";
 import { router as apiRouter } from "./api-router";
+import * as admin from "./controllers/admin";
 
 import { mongo } from "./middlewares/mongodb";
 
@@ -15,6 +16,8 @@ app.use(mongo());
 app.use(bodyParser.json());
 
 app.use(process.env.URL_PREFIX || "/api", apiRouter);
+
+app.post("/app", admin.addApp);
 
 app.use((req, res) => {
   console.warn(JSON.stringify({ type: "http_error_404", url: req.url }));
