@@ -18,6 +18,7 @@ app.use(bodyParser.json());
 app.use(process.env.URL_PREFIX || "/api", apiRouter);
 
 app.post("/app", admin.addApp);
+app.get("/app", admin.listApp);
 
 app.use((req, res) => {
   console.warn(JSON.stringify({ type: "http_error_404", url: req.url }));

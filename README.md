@@ -62,4 +62,6 @@ EDITOR=nano ansible-vault view host_vars/localhost/vault.yml
 
 ```bash
 curl -X POST -H "Content-Type: application/json" -d '{"name":"demo","secret":"demo"}' http://127.0.0.1:8585/app
+
+curl -X GET http://127.0.0.1:8585/app
 ```

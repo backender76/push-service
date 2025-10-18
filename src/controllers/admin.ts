@@ -17,3 +17,10 @@ export const addApp = async (req: Request, res: Response) => {
   );
   res.send(JSON.stringify(data));
 };
+
+export const listApp = async (req: Request, res: Response) => {
+  const { mongo } = req as ApiReq;
+  const applications = mongo.applications();
+  const list = await applications.find({}).toArray();
+  res.send({ list });
+};
