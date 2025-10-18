@@ -7,7 +7,7 @@ export const addApp = async (req: Request, res: Response) => {
 
   const applications = mongo.applications();
 
-  if (!req.body.name || !req.body.secre) {
+  if (!req.body.name || !req.body.secret) {
     return res.send("bad request");
   }
   const data = await applications.updateOne(
